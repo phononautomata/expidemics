@@ -1,0 +1,13 @@
+{
+    "escape_condition": 1.0,
+    "expedited_escape": 0,
+    "nagents": 75000,
+    "nepicenters": 1,
+    "nsims": 30,
+    "pseudomass_exponent": 1.0,
+    "removal_rate": 0.1,
+    "seed_fraction": 0.7,
+    "t_epidemic": 0,
+    "transmission_rate": 0.12,
+    "vaccinated_fraction": 0
+}

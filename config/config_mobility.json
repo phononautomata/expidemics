@@ -1,0 +1,10 @@
+{
+    "gamma": 0.21,
+    "home_weight": 25,
+    "location_threshold": 0.0,
+    "locked_fraction": 0.0,
+    "nagents": 75000,
+    "quarantined_fraction": 0.0,
+    "rho": 0.6,
+    "t_max": 1200
+}
