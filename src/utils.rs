@@ -66,6 +66,169 @@ pub fn build_bostonscatter_filename(space_hm: &HashMap<String, f64>) -> String {
 }
 
 pub fn build_grid_retriever_file_name(
+    mpars: &MobilityPars, 
+    rho_hm: &HashMap<String, f64>,
+    space_str: &String,
+    tessellation_flag: TessellationModel, 
+    ) -> String {
+
+        let head = match mpars.scenario {
+            MobilityScenario::B1het => {
+                format!("mgrid_msb1het_")
+            },
+            MobilityScenario::B1hom => {
+                format!("mgrid_msb1hom_")
+            },
+            MobilityScenario::B2 => {
+                format!("mgrid_msb2_")
+            },
+            MobilityScenario::Depr => {
+                format!("mgrid_msdepr_")
+            },
+            MobilityScenario::Plain => {
+                format!("mgrid_msplain_")
+            },
+            MobilityScenario::Real => {
+                format!("mgrid_msreal_")
+            }
+            MobilityScenario::Uniform => {
+                format!("mgrid_msuniform_")
+            },
+        };
+
+        let time_chain = {
+            let mob_data = match tessellation_flag {
+                TessellationModel::BostonLattice => {
+                    load_json_data("config_grid_bl_retriever")
+                },
+                TessellationModel::BostonScatter => {
+                    load_json_data("config_grid_bs_retriever")
+                },
+                TessellationModel::SyntheticLattice => {
+                    load_json_data("config_grid_rl_retriever")
+                },
+            };
+            
+            let timestamp = mob_data.get("tm").unwrap().as_str().unwrap();
+
+            // Split the timestamp string into separate substrings
+            let year = &timestamp[0..2];
+            let month = &timestamp[2..4];
+            let day = &timestamp[4..6];
+            let hour = &timestamp[6..8];
+            let minute = &timestamp[8..10];
+            let second = &timestamp[10..12];
+            // Create the formatted timestamp string
+            format!(
+                "tm{}{}{}{}{}{}_",
+                year, month, day, hour, minute, second
+            )
+        };
+
+        let chain_one = format!(
+            "na{0}_",
+            mpars.nagents,
+        );
+
+        let quarantine_abbreviation = match mpars.quarantine_strategy {
+            QuarantineStrategy::Explorers => "Exp",
+            QuarantineStrategy::Random => "Ran",
+            QuarantineStrategy::Returners => "Ret",
+            QuarantineStrategy::TopExplorers => "TEx",
+            QuarantineStrategy::TopReturners => "TRe",
+            QuarantineStrategy::Unmitigated => "Unm",
+        };
+
+        let chain_two = format!(
+            "qm{0}_qf{1}_gm{2}_hw{3}_t{4}_rm{5}_",
+            quarantine_abbreviation,
+            mpars.quarantined_fraction,
+            mpars.gamma,
+            mpars.home_weight,    
+            mpars.t_max,
+            mpars.rho_model,
+        );
+
+        let rho_chain = match mpars.rho_model {
+            RhoDistributionModel::Beta => { 
+                format!(
+                    "ra{0}_rb{1}_", 
+                    rho_hm.get("alpha").unwrap(),
+                    rho_hm.get("beta").unwrap()
+                )
+            },
+            RhoDistributionModel::DeltaBimodal => {
+                format!(
+                    "ra{0}_rb{1}_rc{2}_", 
+                    rho_hm.get("share").unwrap(), 
+                    rho_hm.get("mode1").unwrap(), 
+                    rho_hm.get("mode2").unwrap()
+                )
+            },
+            RhoDistributionModel::Exponential => {
+                format!(
+                    "ra{0}_", 
+                    rho_hm.get("rate").unwrap()
+                )
+            },
+            RhoDistributionModel::Gamma => {
+                format!(
+                    "ra{0}_rb{1}_", 
+                    rho_hm.get("shape").unwrap(),
+                    rho_hm.get("scale").unwrap()
+                )
+            },
+            RhoDistributionModel::Gaussian => {
+                format!(
+                    "ra{0}_rb{1}_", 
+                    rho_hm.get("mean").unwrap(),
+                    rho_hm.get("std_dev").unwrap()
+                )
+            },
+            RhoDistributionModel::Homogeneous => {
+                format!(
+                    "ra{0}_", 
+                    rho_hm.get("rho").unwrap()
+                )
+            },
+            RhoDistributionModel::LogNormal => {
+                format!(
+                    "ra{0}_rb{1}_", 
+                    rho_hm.get("mean").unwrap(),
+                    rho_hm.get("variance").unwrap()
+                )
+            },
+            RhoDistributionModel::NegativeBinomial => {
+                format!(
+                    "ra{0}_rb{1}_", 
+                    rho_hm.get("mean").unwrap(),
+                    rho_hm.get("variance").unwrap()
+                )
+            },
+            RhoDistributionModel::Uniform => {
+                format!(
+                    "ra_",
+                )
+            },
+        };
+
+        let lockdown_abbreviation = match mpars.lockdown_strategy {
+            LockdownStrategy::LeastAttractive => "LAt",
+            LockdownStrategy::MostAttractive => "MAt",
+            LockdownStrategy::Random => "Ran",
+            LockdownStrategy::Unmitigated => "Unm",
+        };
+    
+        let lock_chain = format!(
+            "lm{0}_lf{1}_",
+            lockdown_abbreviation,
+            mpars.locked_fraction,
+            );
+
+        head + &time_chain + &chain_one + &chain_two + &rho_chain + &lock_chain + &space_str
+}
+
+pub fn build_grid_retriever_file_name_old(
     mpars: &MobilityPars,
     tessellation_flag: TessellationModel, 
     file_name: &str) -> String {
@@ -86,6 +249,9 @@ pub fn build_grid_retriever_file_name(
         MobilityScenario::Plain => {
             "mgrid_msplain_"
         },
+        MobilityScenario::Real => {
+            "mgrid_msreal_"
+        }
         MobilityScenario::Uniform => {
             "mgrid_msuniform_"
         }
@@ -243,13 +409,15 @@ pub fn build_grid_retriever_file_name(
 
 pub fn build_mobility_retriever_file_name(
     mpars: &MobilityPars, 
-    mob_hm: &HashMap<String, f64>, 
     rho_hm: &HashMap<String, f64>,
     space_str: &String,
 ) -> String {
     let head = match mpars.selection {
         MobilitySelection::Pool => {
             format!("mpool_")
+        },
+        MobilitySelection::Real => {
+            format!("mreal_")
         },
         MobilitySelection::Set => {
             format!("mset_")
@@ -272,6 +440,9 @@ pub fn build_mobility_retriever_file_name(
         MobilityScenario::Plain => {
             format!("msplain_")
         },
+        MobilityScenario::Real => {
+            format!("msreal_")
+        }
         MobilityScenario::Uniform => {
             format!("msuniform_")
         },
@@ -358,7 +529,7 @@ pub fn build_mobility_retriever_file_name(
     let lock_chain = format!(
         "lm{0}_lf{1}_",
         lockdown_abbreviation,
-        mob_hm.get("locked_fraction").unwrap(),
+        mpars.locked_fraction,
         );
 
     let time_chain = match mpars.selection {
@@ -374,6 +545,9 @@ pub fn build_mobility_retriever_file_name(
                 timestamp.second(),
             )
         },
+        MobilitySelection::Real => {
+            format!("")
+        }
         MobilitySelection::Set => {
             let mob_data = load_json_data("config_mobility_retriever");
             let timestamp = mob_data.get("tm").unwrap().as_str().unwrap();
@@ -772,6 +946,7 @@ pub fn mobility_metadata_from_pickle(
     .expect("Failed to get current directory"));
     path.push("data");
     path.push(file_name);
+    println!("{{&file_name}}");
     
     let bytes = std::fs::read(&path).expect("Failed to read pickle file");
     serde_pickle::from_slice(&bytes, Default::default())
@@ -891,6 +1066,7 @@ pub fn retrieve_grid(file_name: &String) -> AgentGrid {
 
     //let file_name = write_agent_grid_file_name(file_name);
     path.push(file_name);
+    println!("{{&file_name}}");
 
     let file = File::open(&path).expect("Unable to open file");
     let r = BufReader::new(file);
@@ -1302,6 +1478,7 @@ pub fn write_chosen_agents_file_name(
             MobilityScenario::B2 => "msb2_".to_string(),
             MobilityScenario::Depr => "msdepr_".to_string(),
             MobilityScenario::Plain => "msplain_".to_string(),
+            MobilityScenario::Real => "msreal_".to_string(),
             MobilityScenario::Uniform => "msuniform_".to_string(),
         };
 
@@ -1318,6 +1495,9 @@ pub fn write_chosen_agents_file_name(
                     timestamp.second(),
                 )
             },
+            MobilitySelection::Real => {
+                format!("")
+            }
             MobilitySelection::Set => {
                 let tm_start = mob_file_name.find("tm").unwrap();
                 let next_underscore = mob_file_name[tm_start..].find('_').unwrap_or(mob_file_name.len());
@@ -1486,22 +1666,24 @@ pub fn write_mobility_metadata_file_name(
 }
 
 pub fn write_mobility_string_identifier(
-    flags: &MobilityPars, 
-    mob_hm: &HashMap<String, f64>, 
+    mpars: &MobilityPars, 
     rho_hm: &HashMap<String, f64>,
     space_str: &String,
 ) -> String {
 
-    let head = match flags.selection {
+    let head = match mpars.selection {
         MobilitySelection::Pool => {
             format!("mpool_")
         },
+        MobilitySelection::Real => {
+            format!("mreal_")
+        }
         MobilitySelection::Set => {
             format!("mset_")
         }
     };
 
-    let subhead = match flags.scenario {
+    let subhead = match mpars.scenario {
         MobilityScenario::B1het => {
             format!("msb1het_")
         },
@@ -1517,6 +1699,9 @@ pub fn write_mobility_string_identifier(
         MobilityScenario::Plain => {
             format!("msplain_")
         },
+        MobilityScenario::Real => {
+            format!("msreal_")
+        }
         MobilityScenario::Uniform => {
             format!("msuniform_")
         },
@@ -1524,13 +1709,13 @@ pub fn write_mobility_string_identifier(
 
     let chain = format!(
         "gm{0}_hw{1}_t{2}_rm{3}_",
-        flags.gamma,
-        flags.home_weight,
-        flags.t_max,
-        flags.rho_model,
+        mpars.gamma,
+        mpars.home_weight,
+        mpars.t_max,
+        mpars.rho_model,
     );
         
-    let rho_chain = match flags.rho_model {
+    let rho_chain = match mpars.rho_model {
         RhoDistributionModel::Beta => { 
             format!(
                 "ra{0}_rb{1}_", 
@@ -1593,7 +1778,7 @@ pub fn write_mobility_string_identifier(
         },
     };
 
-    let lockdown_abbreviation = match flags.lockdown_strategy {
+    let lockdown_abbreviation = match mpars.lockdown_strategy {
         LockdownStrategy::LeastAttractive => "LAt",
         LockdownStrategy::MostAttractive => "MAt",
         LockdownStrategy::Random => "Ran",
@@ -1603,7 +1788,7 @@ pub fn write_mobility_string_identifier(
     let lock_chain = format!(
         "lm{0}_lf{1}_",
         lockdown_abbreviation,
-        mob_hm.get("locked_fraction").unwrap(),
+        mpars.locked_fraction,
         );
 
     let timestamp = Local::now();
@@ -1710,3 +1895,4 @@ pub fn find_second_max_indices(matrix: &Vec<Vec<i32>>) -> Vec<u32> {
 
     second_max_indices
 }
+

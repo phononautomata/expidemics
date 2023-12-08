@@ -69,41 +69,46 @@ pub struct EpidemicPars {
     pub nepicenters: u32,
     pub nsims: u32,
     pub pseudomass_exponent: f64,
+    pub removal_rate: f64,
     pub seed_fraction: f64,
     pub t_epidemic: u32,
     pub transmission_rate: f64,
-    pub removal_rate: f64,
     pub vaccinated_fraction: f64,
     pub vaccination_strategy: VaccinationStrategy,
 }
 
 impl EpidemicPars {
     pub fn new(
-        as_model: AgentSeedModel,
-        ls_model: LocationSeedModel, 
-        v_model: VaccinationStrategy,
-        epi_hm: &HashMap<String, f64>,
+        agent_seed_model: AgentSeedModel,
+        escape_condition: f64,
+        expedited_escape: bool,
+        location_seed_model: LocationSeedModel, 
+        nagents: u32,
+        nepicenters: u32,
+        nsims: u32,
+        pseudomass_exponent: f64,
+        removal_rate: f64,
+        seed_fraction: f64,
+        t_epidemic: u32,
+        transmission_rate: f64,
+        vaccinated_fraction: f64,
+        vaccination_model: VaccinationStrategy,
     ) -> Self {
         Self { 
-            agent_seed: as_model,
-            escape_condition: *epi_hm.get("escape_condition").unwrap(),
-            expedited_escape: {
-                let expedited_escape = 
-                *epi_hm.get("expedited_escape").unwrap();
-                let converted_escape: bool = expedited_escape > 0.0;
-                converted_escape
-            },
-            location_seed: ls_model,
-            nagents: *epi_hm.get("nagents").unwrap() as u32,
-            nepicenters: *epi_hm.get("nepicenters").unwrap() as u32,
-            nsims: *epi_hm.get("nsims").unwrap() as u32,
-            pseudomass_exponent: *epi_hm.get("pseudomass_exponent").unwrap(),
-            seed_fraction: *epi_hm.get("seed_fraction").unwrap(),
-            t_epidemic: *epi_hm.get("t_epidemic").unwrap() as u32,
-            transmission_rate: *epi_hm.get("transmission_rate").unwrap(),
-            removal_rate: *epi_hm.get("removal_rate").unwrap(),
-            vaccinated_fraction: *epi_hm.get("vaccinated_fraction").unwrap(),
-            vaccination_strategy: v_model,
+            agent_seed: agent_seed_model,
+            escape_condition: escape_condition,
+            expedited_escape: expedited_escape,
+            location_seed: location_seed_model,
+            nagents: nagents,
+            nepicenters: nepicenters,
+            nsims: nsims,
+            pseudomass_exponent: pseudomass_exponent,
+            removal_rate: removal_rate,
+            seed_fraction: seed_fraction,
+            t_epidemic: t_epidemic,
+            transmission_rate: transmission_rate,
+            vaccinated_fraction: vaccinated_fraction,
+            vaccination_strategy: vaccination_model,
         }
     }
 
@@ -1060,6 +1065,7 @@ impl AgentGrid {
             MobilityScenario::B2 => "msb2_".to_string(),
             MobilityScenario::Depr => "msdepr_".to_string(),
             MobilityScenario::Plain => "msplain_".to_string(),
+            MobilityScenario::Real => "msreal_".to_string(),
             MobilityScenario::Uniform => "msuniform_".to_string(),
         };
 
@@ -1076,6 +1082,9 @@ impl AgentGrid {
                     timestamp.second(),
                 )
             },
+            MobilitySelection::Real => {
+                format!("")
+            }
             MobilitySelection::Set => {
                 let tm_start = mob_file_name.find("tm").unwrap();
                 let next_underscore = mob_file_name[tm_start..].find('_').unwrap_or(mob_file_name.len());

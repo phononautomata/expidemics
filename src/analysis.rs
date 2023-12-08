@@ -19,8 +19,7 @@ pub fn build_event_id_array(event_ensemble: &Vec<Event>, nlocs: usize, t_max: us
 pub fn digest_raw_output(
     output_ensemble: &Vec<Output>, 
     a_vec: &Vec<f64>,
-    mpars: &MobilityPars, 
-    mob_hm: &HashMap<String, f64>, 
+    mpars: &MobilityPars,  
     rho_hm: &HashMap<String, f64>,
     space_str: &String ) -> DigestedOutput {
 
@@ -35,7 +34,7 @@ pub fn digest_raw_output(
     .collect();
     let _nlocs_eff = real_loc_indices.len();
 
-    let mob_str = build_mobility_retriever_file_name(&mpars, &mob_hm, &rho_hm, &space_str);
+    let mob_str = build_mobility_retriever_file_name(&mpars, &rho_hm, &space_str);
     println!("{}", mob_str);
     let mobility_data = retrieve_mobility(&mob_str);
     let t_max = mobility_data[0].trajectory.len();

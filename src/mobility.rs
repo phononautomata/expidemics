@@ -38,6 +38,7 @@ use crate::{
 )]
 pub enum MobilitySelection {
     Pool,
+    Real,
     Set,
 }
 
@@ -58,6 +59,7 @@ pub enum MobilityScenario {
     B2,
     Depr,
     Plain,
+    Real,
     Uniform,
 }
 
@@ -159,30 +161,36 @@ pub struct MobilityPars {
 
 impl MobilityPars {
     pub fn new(
+        gamma: f64,
+        home_weight: u32,
+        location_threshold: Option<f64>,
         lockdown_strategy: LockdownStrategy,
-        mob_hm: &HashMap<String, f64>,
+        locked_fraction: f64,
+        nagents: u32,
+        nlocs: u32,
         quarantine_strategy: QuarantineStrategy,
+        quarantined_fraction: f64,
+        rho: f64,
         rho_model: RhoDistributionModel, 
         selection: MobilitySelection,
         scenario: MobilityScenario,
+        t_max: u32,
     ) -> Self {
         Self { 
-            gamma: *mob_hm.get("gamma").unwrap(), 
-            home_weight: *mob_hm.get("home_weight").unwrap() as u32,
-            location_threshold: 
-            Some(*mob_hm.get("location_threshold").unwrap()),
+            gamma: gamma, 
+            home_weight: home_weight,
+            location_threshold: location_threshold,
             lockdown_strategy,
-            locked_fraction: *mob_hm.get("locked_fraction").unwrap(),
-            nagents: *mob_hm.get("nagents").unwrap() as u32, 
-            nlocs: 0,
+            locked_fraction: locked_fraction,
+            nagents: nagents, 
+            nlocs: nlocs,
             quarantine_strategy,
-            quarantined_fraction: 
-            *mob_hm.get("quarantined_fraction").unwrap(),
-            rho: *mob_hm.get("rho").unwrap(), 
+            quarantined_fraction: quarantined_fraction,
+            rho: rho,
             rho_model,
             selection,
             scenario,
-            t_max: *mob_hm.get("t_max").unwrap() as u32, 
+            t_max: t_max, 
         }
     }
 }
@@ -439,7 +447,26 @@ impl MobileAgent {
     ) { 
 
         match home_flag {
-            HomeModel::Attractiveness => {},
+            HomeModel::Attractiveness => {
+                let mut rng = rand::thread_rng();
+                let attractiveness_cutoff = 0.0000001;
+
+                let attractiveness_values: Vec<_> = space.inner().iter().map(|s| s.attractiveness.unwrap()).collect();
+
+                let dist = WeightedIndex::new(&attractiveness_values).unwrap();
+
+                loop {
+                    let trial = dist.sample(&mut rng);
+                    let attractiveness = space.inner()[trial as usize].attractiveness.unwrap();
+                    if attractiveness >= attractiveness_cutoff {
+                        self.home = trial as u32;
+                        self.current = self.home;
+                        self.visits_hm.insert(self.home, home_weight);
+                        self.trajectory.push(self.home);
+                        break;
+                    }
+                }
+            },
             HomeModel::Census => {
                 let mut rng = rand::thread_rng();
                 let attractiveness_cutoff = 0.0000001;
@@ -447,7 +474,6 @@ impl MobileAgent {
                 let filename = build_bostonlattice_census_filename(space_hm);
                 let home_fraction_array = load_databased_census_data(&filename);
 
-                // Calculate weights from the values in homes_array
                 let dist = WeightedIndex::new(&home_fraction_array).unwrap();
 
                 loop {
@@ -458,7 +484,7 @@ impl MobileAgent {
                         self.current = self.home;
                         self.visits_hm.insert(self.home, home_weight);
                         self.trajectory.push(self.home);
-                        break; // Exit the loop once a suitable location is found
+                        break;
                     }
                 }
             },
@@ -475,7 +501,7 @@ impl MobileAgent {
                         self.current = self.home;
                         self.visits_hm.insert(self.home, home_weight);
                         self.trajectory.push(self.home);
-                        break; // Exit the loop once a suitable location is found
+                        break;
                     }
                 }
             },

@@ -441,10 +441,114 @@ def modify_json_file(file_path, key, value):
     with open(file_path, 'w') as file:
         json.dump(data, file)
 
-def call_rust_file(file_path, exp_flag=None):
+def call_rust_file(
+        file_path, 
+        agent_seed_model=None,
+        attractiveness_model=None,
+        boundary_model=None,
+        config_flag=None,
+        escape_condition=None,
+        exp_flag=None,
+        expedited_escape_flag=None,
+        gamma=None,
+        home_model=None,
+        home_weight=None,
+        location_threshold=None,
+        lockdown_model=None,
+        locked_fraction=None,
+        location_seed_model=None,
+        pole_model=None,
+        quarantine_model=None,
+        quarantined_fraction=None,
+        raw_output_flag=None,
+        rho=None,
+        rho_distribution_model=None,
+        mobility_selection_flag=None,
+        mobility_scenario_model=None,
+        nagents=None,
+        nepicenters=None,
+        nsims=None,
+        pseudomass_exponent=None,
+        removal_rate=None,
+        seed_fraction=None,
+        t_epidemic=None,
+        t_max=None,
+        tessellation_model=None,
+        transmission_rate=None,
+        vaccination_model=None,
+        vaccination_fraction=None,
+        ):
+    
     command = ['cargo', 'run', '-r', '--']
+    if agent_seed_model is not None:
+        command.extend(['--agent-seed-model', str(agent_seed_model)])
+    if attractiveness_model is not None:
+        command.extend(['--attractiveness-model', str(attractiveness_model)])
+    if boundary_model is not None:
+        command.extend(['--boundary-model', str(boundary_model)])
+    if config_flag is not None:
+        command.extend(['--config-flag', str(config_flag).lower()])
+    if escape_condition is not None:
+        command.extend(['--escape-condition', str(escape_condition)])
     if exp_flag is not None:
         command.extend(['--exp-flag', str(exp_flag)])
+    if expedited_escape_flag is not None:
+        command.extend(['--expedited-escape-flag', str(expedited_escape_flag).lower()])
+    if gamma is not None:
+        command.extend(['--gamma', str(gamma)])
+    if home_model is not None:
+        command.extend(['--home-model', str(home_model)])
+    if home_weight is not None:
+        command.extend(['--home-weight', str(home_weight)])
+    if location_threshold is not None:
+        command.extend(['--location-threshold', str(location_threshold)])
+    if lockdown_model is not None:
+        command.extend(['--lockdown-model', str(lockdown_model).lower()])
+    if locked_fraction is not None:
+        command.extend(['--locked-fraction', str(locked_fraction)])
+    if location_seed_model is not None:
+        command.extend(['--location-seed-model', str(location_seed_model).lower()])
+    if mobility_selection_flag is not None:
+        command.extend(['--mobility-selection-flag', str(mobility_selection_flag).lower()])
+    if mobility_scenario_model is not None:
+        command.extend(['--mobility-scenario-model', str(mobility_scenario_model).lower()])
+    if nagents is not None:
+        command.extend(['--nagents', str(nagents)])
+    if nepicenters is not None:
+        command.extend(['--nepicenters', str(nepicenters)])
+    if nsims is not None:
+        command.extend(['--nsims', str(nsims)])
+    if pole_model is not None:
+        command.extend(['--pole-flag', str(pole_model).lower()])
+    if pseudomass_exponent is not None:
+        command.extend(['--pseudomass-exponent', str(pseudomass_exponent)])
+    if quarantine_model is not None:
+        command.extend(['--quarantine-model', str(quarantine_model)])
+    if quarantined_fraction is not None:
+        command.extend(['--quarantined-fraction', str(quarantined_fraction)])
+    if raw_output_flag is not None:
+        command.extend(['--raw-output-flag', str(raw_output_flag).lower()])
+    if rho is not None:
+        command.extend(['--rho', str(rho)])
+    if rho_distribution_model is not None:
+        command.extend(['--rho-distribution-model', str(rho_distribution_model)])
+    if removal_rate is not None:
+        command.extend(['--removal-rate', str(removal_rate)])
+    if seed_fraction is not None:
+        command.extend(['--seed-fraction', str(seed_fraction)])
+    if t_epidemic is not None:
+        command.extend(['--t-epidemic', str(t_epidemic)])
+    if t_max is not None:
+        command.extend(['--t-max', str(t_max)])
+    if tessellation_model is not None:
+        command.extend(['--tessellation-model', str(tessellation_model)])
+    if transmission_rate is not None:
+        command.extend(['--transmission-rate', str(transmission_rate)])
+    if vaccination_model is not None:
+        command.extend(['--vaccination-model', str(vaccination_model)])
+    if vaccination_fraction is not None:
+        command.extend(['--vaccinated-fraction', str(vaccination_fraction)])
+
     subprocess.run(command, cwd=file_path)
 
 def dms_to_decimal(degrees, minutes, seconds):
@@ -4955,3 +5059,135 @@ def build_label_dictionary():
         'uniform': 'uniform', 
         }
     return label_dict
+
+def build_boston_lattice_file_name(cwd_path, lower_path, config_file_name):
+    file_path = os.path.join(cwd_path, lower_path, config_file_name)
+
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    
+    DX = data['DX']
+    DY = data['DY']
+    LN0 = data['LN0']
+    LT0 = data['LT0']
+    rd = data['rd']
+    x = data['x']
+    y = data['y']
+    ts = data['ts']
+    
+    file_name = f"space_DX{DX}_DY{DY}_LN0{LN0}_LT0{LT0}_rd{rd}_x{x}_y{y}_ts{ts}.pickle"
+
+    return file_name
+
+def build_boston_scatter_file_name(cwd_path, lower_path, space_config_file_name):
+    space_file_path = os.path.join(cwd_path, lower_path, space_config_file_name)
+
+    with open(space_file_path, 'r') as file:
+        space_metadata = json.load(file)
+    
+    LNE = space_metadata['LNE']
+    LNW = space_metadata['LNW']
+    LTN = space_metadata['LTN']
+    LTS = space_metadata['LTS']
+    nl = space_metadata['nl']
+    rd = space_metadata['rd']
+    ts = space_metadata['ts']
+
+    space_file_name = f"space_LNE{LNE}_LNW{LNW}_LTN{LTN}_LTS{LTS}_nl{nl}_rd{rd}_ts{ts}.pickle"
+
+    return space_file_name
+
+def build_regular_lattice_file_name(cwd_path, lower_path, space_config_file_name):
+    space_file_path = os.path.join(cwd_path, lower_path, space_config_file_name)
+
+    with open(space_file_path, 'r') as file:
+        space_metadata = json.load(file)
+    
+    am = space_metadata['am']
+    aa = space_metadata['aa']
+    ab = space_metadata['ab']
+    bm = space_metadata['bm']
+    np = space_metadata['np']
+    x = space_metadata['x']
+    y = space_metadata['y']
+    ts = space_metadata['ts']
+
+    space_file_name = f"space_am{am}_aa{aa}_ab{ab}_bm{bm}_np{np}_x{x}_y{y}_ts{ts}.pickle"
+
+    return space_file_name
+
+def build_mobility_file_name(cwd_path, lower_path, mobility_config_file_name, mobility_selection_flag, mobility_scenario_model, space_config_file_name, tessellation_model):
+    mobility_file_path = os.path.join(cwd_path, lower_path, mobility_config_file_name)
+
+    with open(mobility_file_path, 'r') as file:
+        mobility_metadata = json.load(file)
+
+    gm = mobility_metadata['gm']
+    hw = mobility_metadata['hw']
+    t = mobility_metadata['t']
+    rm = mobility_metadata['rm']
+    ra = mobility_metadata['ra']
+    na = mobility_metadata['na']
+    lm = mobility_metadata['lm']
+    lf = mobility_metadata['lf']
+    qm = mobility_metadata['qm']
+    qf = mobility_metadata['qf']
+    tm = mobility_metadata['tm']
+
+    head = "m" + mobility_selection_flag + "_"
+    subhead = "ms" + mobility_scenario_model + "_"
+    chain = f"gm{gm}_hw{hw}_t{t}_rm{rm}_"
+    if rm == 'Beta' or rm == 'Gamma' or rm == 'Gaussian' or rm == 'LogNormal' or rm == 'NegativeBinomial':
+        rb = mobility_metadata['rb']
+        rho_chain = f"ra{ra}_rb{rb}_"
+    elif rm == 'DeltaBimodal':
+        rc = mobility_metadata['rc']
+        rho_chain = f"ra{ra}_rb{rb}_rc{rc}_"
+    elif rm == 'Exponential' or rm == 'Homogeneous' or rm == 'Uniform':
+        rho_chain = f"ra{ra}_"
+
+    lock_chain = f"lm{lm}_lf{lf}_"
+    time_chain = f"tm{tm}_"   
+
+    if tessellation_model == 'boston-lattice':
+        space_chain = build_boston_lattice_file_name(cwd_path, lower_path, space_config_file_name)
+    elif tessellation_model == 'boston-scatter':
+        space_chain = build_boston_scatter_file_name(cwd_path, lower_path, space_config_file_name)
+    elif tessellation_model == 'synthetic-lattice':
+        space_chain = build_regular_lattice_file_name(cwd_path, lower_path, space_config_file_name)
+
+    mobility_file_name = head + subhead + chain + rho_chain + lock_chain + time_chain + space_chain
+
+    return mobility_file_name
+
+def find_latest_file_with_timestamp(path, lower_path, mobility_scenario_model):
+    fullpath = os.path.join(path, lower_path)
+    files = [f for f in os.listdir(fullpath) 
+             if f.startswith(f'mset_ms{mobility_scenario_model}') and f.endswith('.pickle')]
+
+    if not files:
+        raise FileNotFoundError("No matching files found")
+
+    # Sort files by creation time (most recent first)
+    full_paths = [os.path.join(fullpath, f) for f in files]
+    full_paths.sort(key=os.path.getctime, reverse=True)
+
+    # Extract mobility_time_stamp from the most recent file
+    latest_file = full_paths[0]
+    start_index = latest_file.find('tm') + 2
+    end_index = latest_file.find('_', start_index)
+    mobility_time_stamp = latest_file[start_index:end_index]
+
+    return mobility_time_stamp
+
+def rho_distribution_model_parameter_dictionary(rho_distribution_model):
+    rdmp_dict = {}
+
+    if rho_distribution_model == 'beta':
+        rdmp_dict['ra'] = 2.0
+        rdmp_dict['rb'] = 2.0
+    elif rho_distribution_model == 'gaussian':
+        rdmp_dict['ra'] = 0.5
+        rdmp_dict['rb'] = 0.1
+    
+    rdmp_dict

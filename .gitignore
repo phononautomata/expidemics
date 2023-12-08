@@ -1,6 +1,8 @@
-/target
-/data/
-/results/
+target
+data
+results
 *.pickle
 *.png
 *.pdf
+Cargo.lock
+.DS_Store
